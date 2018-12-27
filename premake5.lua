@@ -23,16 +23,23 @@ project "FractalViewer"
 	includedirs {
 		"%{prj.name}/src/",
 		"%{prj.name}/extlib/glfw/include/",
+		"%{prj.name}/extlib/glew/include/",
 		"%{prj.name}/extlib/glm/include/"
 	}
 
 	libdirs {
-		"%{prj.name}/extlib/glfw/"
+		"%{prj.name}/extlib/glfw/",
+		"%{prj.name}/extlib/glew/"
 	}
 
 	links {
 		"GLFW",
+		"glew32s",
 		"OpenGL32"
+	}
+
+	defines {
+		"GLEW_STATIC"
 	}
 
 	filter "system:windows"
