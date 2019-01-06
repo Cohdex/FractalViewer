@@ -9,6 +9,8 @@ namespace fv
 	{
 		m_window = std::make_unique<Window>(1920, 1080);
 		std::cout << "OpenGL " << glGetString(GL_VERSION) << std::endl;
+		m_window->setMouseCallback(std::bind(&FractalViewerApp::mousePosHandler, this, std::placeholders::_1, std::placeholders::_2));
+		m_window->setScrollCallback(std::bind(&FractalViewerApp::scrollHandler, this, std::placeholders::_1));
 
 		/*std::shared_ptr<ShaderStage> geometryShader = std::make_shared<ShaderStage>(R"(
 			#version 430 core
@@ -88,32 +90,49 @@ namespace fv
 				float r = smoothstep(0.0, 1.0, i);
 				float g = 1.0 - exp(-i * 5.0);
 				float b = sin(i * PI);
-				b = r * 0.7;
+				//b = r * 0.7;
 				fragColor = vec4(vec3(r, g, b) * (1.0 - n / max), 1.0);
 			})",
 			EShaderType::Fragment);
 		m_shader = std::make_unique<ShaderProgram>(std::vector<std::shared_ptr<ShaderStage>>{ /*geometryShader,*/ vertexShader, fragmentShader });
-		m_shader->use();
-		float xPos = -0.7431533999637661f;
-		float yPos = -0.1394057861346605f;
-		float zoom = 1779.803945297549f;
-		//xPos = 0; yPos = 0; zoom = 1;
-		float reWidth = 3.0f;
-		float minRe = (-reWidth / 2.0f - 0.5f) / zoom + xPos;
-		float maxRe = (reWidth / 2.0f - 0.5f) / zoom + xPos;
-		float imHeight = (maxRe - minRe) * ((float)m_window->getHeight() / m_window->getWidth());
-		float minIm = -imHeight / 2 + yPos;
-		float maxIm = imHeight / 2 + yPos;
-		m_shader->setUniform("lowerLeft", glm::vec2(minRe, minIm));
-		m_shader->setUniform("upperRight", glm::vec2(maxRe, maxIm));
+	}
+
+	void FractalViewerApp::mousePosHandler(double xPos, double yPos)
+	{
+		double deltaX = (xPos - m_lastMouseX) / m_window->getWidth();
+		double deltaY = (yPos - m_lastMouseY) / m_window->getHeight();
+		m_lastMouseX = xPos;
+		m_lastMouseY = yPos;
+		if (m_window->isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
+		{
+			m_xPos -= deltaX / m_zoom * 2;
+			m_yPos += deltaY / m_zoom * 2;
+		}
+	}
+
+	void FractalViewerApp::scrollHandler(double scroll)
+	{
+		m_zoom *= glm::pow(1.1, scroll);
 	}
 
 	void FractalViewerApp::run()
 	{
+		//xPos = -0.7431533999637661f; yPos = -0.1394057861346605f; zoom = 1779.803945297549f;
+
 		GLuint vao;
 		glCreateVertexArrays(1, &vao);
 		while (!m_window->isCloseRequested())
 		{
+			double reWidth = 3.0f;
+			double minRe = (-reWidth / 2.0f - 0.5f) / m_zoom + m_xPos;
+			double maxRe = (reWidth / 2.0f - 0.5f) / m_zoom + m_xPos;
+			double imHeight = (maxRe - minRe) * ((float)m_window->getHeight() / m_window->getWidth());
+			double minIm = -imHeight / 2 + m_yPos;
+			double maxIm = imHeight / 2 + m_yPos;
+			m_shader->use();
+			m_shader->setUniform("lowerLeft", glm::vec2((float)minRe, (float)minIm));
+			m_shader->setUniform("upperRight", glm::vec2((float)maxRe, (float)maxIm));
+
 			GL_CALL(glClearColor(0.3f, 0.5f, 0.8f, 1.0f));
 			GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 			m_shader->use();

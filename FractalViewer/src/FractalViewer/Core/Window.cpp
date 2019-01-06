@@ -37,7 +37,11 @@ namespace fv
 			throw "Could not initialize GLEW!";
 		}
 
-		glEnable(GL_DEBUG_OUTPUT);
+		glfwSetWindowUserPointer(m_window, this);
+		glfwSetCursorPosCallback(m_window, Window::glfwMousePosCallback);
+		glfwSetScrollCallback(m_window, Window::glfwScrollCallback);
+
+		//glEnable(GL_DEBUG_OUTPUT);
 		//glDebugMessageCallback(opengl_error_callback, nullptr);
 
 		GL_CALL(glViewport(0, 0, m_width, m_height));
@@ -57,5 +61,38 @@ namespace fv
 	bool Window::isCloseRequested() const
 	{
 		return glfwWindowShouldClose(m_window);
+	}
+
+	void Window::glfwMousePosCallback(GLFWwindow* window, double xPos, double yPos)
+	{
+		Window& myWindow = *static_cast<Window*>(glfwGetWindowUserPointer(window));
+		if (myWindow.m_mouseCallback)
+		{
+			myWindow.m_mouseCallback(xPos, yPos);
+		}
+	}
+
+	void Window::setMouseCallback(MouseCallback callback)
+	{
+		m_mouseCallback = callback;
+	}
+
+	void Window::glfwScrollCallback(GLFWwindow* window, double xScroll, double yScroll)
+	{
+		Window& myWindow = *static_cast<Window*>(glfwGetWindowUserPointer(window));
+		if (myWindow.m_scrollCallback)
+		{
+			myWindow.m_scrollCallback(yScroll);
+		}
+	}
+
+	void Window::setScrollCallback(ScrollCallback callback)
+	{
+		m_scrollCallback = callback;
+	}
+
+	bool Window::isMouseButtonPressed(int button)
+	{
+		return glfwGetMouseButton(m_window, button) == GLFW_PRESS;
 	}
 }
