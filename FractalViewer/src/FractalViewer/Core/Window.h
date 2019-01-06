@@ -19,5 +19,7 @@ namespace fv
 		inline int getHeight() const { return m_height; }
 
 		void update();
+
+		bool isCloseRequested() const;
 	};
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Windows.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -23,3 +24,8 @@
 
 #include <typeinfo>
 #include <type_traits>
+
+
+#define GL_CALL(gl) \
+gl; \
+(glGetError() != GL_NO_ERROR ? DebugBreak() : 0)
