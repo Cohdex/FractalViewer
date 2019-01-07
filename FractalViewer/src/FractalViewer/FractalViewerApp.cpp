@@ -65,6 +65,37 @@ namespace fv
 			uniform vec2 lowerLeft;
 			uniform vec2 upperRight;
 
+			vec3 temperatureToColor(float temperature)
+			{
+				float temp = temperature / 100.0;
+				vec3 color;
+				if (temp <= 66.0)
+				{
+					color.r = 255.0;
+
+					color.g = 99.4708025861 * log(temp) - 161.1195681661;
+
+					if (temp <= 19.0)
+					{
+						color.b = 0.0;
+					}
+					else
+					{
+						color.b = 138.5177312231 * log(temp - 10.0) - 305.0447927307;
+					}
+				}
+				else
+				{
+					color.r = 329.698727446 * pow(temp - 60.0, -0.1332047592);
+
+					color.g = 288.1221695283 * pow(temp - 60.0, -0.0755148492);
+
+					color.b = 255.0;
+				}
+
+				return clamp(color / 255.0, 0.0, 1.0);
+			}
+
 			void main()
 			{
 				vec2 c = mix(lowerLeft, upperRight, uv);
@@ -73,7 +104,7 @@ namespace fv
 				float zIm = c.y;
 
 				int n;
-				const int max = 1 << 14;
+				const int max = 1 << 12;
 				for (n = 0; n < max; n++)
 				{
 					float zRe2 = zRe * zRe;
@@ -87,11 +118,16 @@ namespace fv
 				}
 
 				float i = n / (max - 1.0);
-				float r = smoothstep(0.0, 1.0, i);
-				float g = 1.0 - exp(-i * 5.0);
-				float b = sin(i * PI);
+				//float r = smoothstep(0.0, 1.0, i);
+				//float g = 1.0 - exp(-i * 5.0);
+				//float b = sin(i * PI);
 				//b = r * 0.7;
-				fragColor = vec4(vec3(r, g, b) * (1.0 - n / max), 1.0);
+
+				float minTemp = 1000;
+				float maxTemp = 40000;
+				vec3 color = temperatureToColor(mix(minTemp, maxTemp, i));
+
+				fragColor = vec4(color * (1.0 - n / max), 1.0);
 			})",
 			EShaderType::Fragment);
 		m_shader = std::make_unique<ShaderProgram>(std::vector<std::shared_ptr<ShaderStage>>{ /*geometryShader,*/ vertexShader, fragmentShader });
@@ -113,6 +149,7 @@ namespace fv
 	void FractalViewerApp::scrollHandler(double scroll)
 	{
 		m_zoom *= glm::pow(1.1, scroll);
+		m_zoom = glm::max(m_zoom, 1.0);
 	}
 
 	void FractalViewerApp::run()
@@ -123,10 +160,10 @@ namespace fv
 		glCreateVertexArrays(1, &vao);
 		while (!m_window->isCloseRequested())
 		{
-			double reWidth = 3.0f;
-			double minRe = (-reWidth / 2.0f - 0.5f) / m_zoom + m_xPos;
-			double maxRe = (reWidth / 2.0f - 0.5f) / m_zoom + m_xPos;
-			double imHeight = (maxRe - minRe) * ((float)m_window->getHeight() / m_window->getWidth());
+			double reWidth = 3.0;
+			double minRe = (-reWidth / 2.0) / m_zoom - 0.5 + m_xPos;
+			double maxRe = (reWidth / 2.0) / m_zoom - 0.5 + m_xPos;
+			double imHeight = (maxRe - minRe) * ((double)m_window->getHeight() / m_window->getWidth());
 			double minIm = -imHeight / 2 + m_yPos;
 			double maxIm = imHeight / 2 + m_yPos;
 			m_shader->use();
