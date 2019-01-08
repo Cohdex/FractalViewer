@@ -1,6 +1,6 @@
 workspace "FractalViewer"
 	architecture "x86_64"
-	configurations { "Debug", "Release", "Dist" }
+	configurations { "Debug", "Develop", "Release" }
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
@@ -50,11 +50,14 @@ project "FractalViewer"
 	filter "configurations:Debug"
 		defines "FV_DEBUG"
 		symbols "On"
+		optimize "Off"
+
+	filter "configurations:Develop"
+		defines "FV_DEVELOP"
+		symbols "Off"
+		optimize "On"
 
 	filter "configurations:Release"
 		defines "FV_RELEASE"
-		optimize "On"
-
-	filter "configurations:Dist"
-		defines "FV_DIST"
-		optimize "On"
+		symbols "Off"
+		optimize "Full"
